@@ -1,0 +1,105 @@
+name: Sync with Upstream
+
+on:
+  schedule:
+    # Run twice daily at 6 AM and 6 PM UTC
+    - cron: '0 6,18 * * *'
+  workflow_dispatch: # Allow manual trigger
+
+env:
+  UPSTREAM_REPO: 'gorules/jdm-editor'
+  UPSTREAM_BRANCH: 'master'
+  TARGET_BRANCH: 'master'
+
+jobs:
+  sync-upstream:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+      actions: write
+
+    steps:
+      - name: Checkout repository
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+          token: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: Configure Git
+        run: |
+          git config --global user.name 'github-actions[bot]'
+          git config --global user.email 'github-actions[bot]@users.noreply.github.com'
+
+      - name: Add upstream remote
+        run: |
+          git remote add upstream https://github.com/${{ env.UPSTREAM_REPO }}.git || true
+          git fetch upstream
+
+      - name: Check for upstream changes
+        id: check-changes
+        run: |
+          # Get the latest commit from upstream
+          UPSTREAM_COMMIT=$(git rev-parse upstream/${{ env.UPSTREAM_BRANCH }})
+          LOCAL_COMMIT=$(git rev-parse HEAD)
+          
+          echo "upstream_commit=$UPSTREAM_COMMIT" >> $GITHUB_OUTPUT
+          echo "local_commit=$LOCAL_COMMIT" >> $GITHUB_OUTPUT
+          
+          # Check if there are new commits upstream
+          if git merge-base --is-ancestor $UPSTREAM_COMMIT HEAD; then
+            echo "has_changes=false" >> $GITHUB_OUTPUT
+            echo "No new upstream changes"
+          else
+            echo "has_changes=true" >> $GITHUB_OUTPUT
+            echo "New upstream changes detected"
+          fi
+
+      - name: Create backup branch
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          BACKUP_BRANCH="backup-before-sync-$(date +%Y%m%d-%H%M%S)"
+          git checkout -b $BACKUP_BRANCH
+          git push origin $BACKUP_BRANCH
+          echo "Created backup branch: $BACKUP_BRANCH"
+          git checkout ${{ env.TARGET_BRANCH }}
+
+      - name: Rebase with upstream changes
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          # Attempt to rebase our changes on top of upstream
+          if git rebase upstream/${{ env.UPSTREAM_BRANCH }}; then
+            echo "Rebase successful"
+          else
+            echo "Rebase failed - manual intervention required"
+            git rebase --abort
+            exit 1
+          fi
+
+      - name: Push rebased changes
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          git push --force-with-lease origin ${{ env.TARGET_BRANCH }}
+
+      - name: Create sync tag
+        if: steps.check-changes.outputs.has_changes == 'true'
+        run: |
+          TAG_NAME="upstream-sync-$(date +%Y%m%d-%H%M%S)"
+          UPSTREAM_COMMIT="${{ steps.check-changes.outputs.upstream_commit }}"
+          
+          git tag -a $TAG_NAME -m "Synced with upstream commit $UPSTREAM_COMMIT at $(date)"
+          git push origin $TAG_NAME
+          
+          echo "Created tag: $TAG_NAME"
+
+      - name: Create summary
+        if: always()
+        run: |
+          if [ "${{ steps.check-changes.outputs.has_changes }}" == "true" ]; then
+            echo "## 🔄 Upstream Sync Completed" >> $GITHUB_STEP_SUMMARY
+            echo "- **Upstream commit**: ${{ steps.check-changes.outputs.upstream_commit }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Previous local commit**: ${{ steps.check-changes.outputs.local_commit }}" >> $GITHUB_STEP_SUMMARY
+            echo "- **Sync tag created**: upstream-sync-$(date +%Y%m%d-%H%M%S)" >> $GITHUB_STEP_SUMMARY
+          else
+            echo "## ✅ No Upstream Changes" >> $GITHUB_STEP_SUMMARY
+            echo "Repository is already up to date with upstream." >> $GITHUB_STEP_SUMMARY
+          fi
