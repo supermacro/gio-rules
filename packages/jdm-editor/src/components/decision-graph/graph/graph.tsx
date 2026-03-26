@@ -48,22 +48,23 @@ export type GraphRef = DecisionGraphStoreType['actions'] & {
   stateStore: ExposedStore<DecisionGraphStoreType['state']>;
 };
 
-const defaultNodeTypes = Object.entries(nodeSpecification).reduce(
-  (acc, [key, value]) => ({
-    ...acc,
-    [key]: React.memo(
-      (props: MinimalNodeProps) => value.renderNode({ specification: value, ...props }),
-      (prevProps, nextProps) => {
-        return (
-          prevProps.id === nextProps.id &&
-          prevProps.selected === nextProps.selected &&
-          equal(prevProps.data, nextProps.data)
-        );
-      },
-    ),
-  }),
-  {},
-);
+const getDefaultNodeTypes = () =>
+  Object.entries(nodeSpecification).reduce(
+    (acc, [key, value]) => ({
+      ...acc,
+      [key]: React.memo(
+        (props: MinimalNodeProps) => value.renderNode({ specification: value, ...props }),
+        (prevProps, nextProps) => {
+          return (
+            prevProps.id === nextProps.id &&
+            prevProps.selected === nextProps.selected &&
+            equal(prevProps.data, nextProps.data)
+          );
+        },
+      ),
+    }),
+    {},
+  );
 
 const edgeTypes = {
   edge: React.memo(edgeFunction(null)),
@@ -165,7 +166,7 @@ export const Graph = forwardRef<GraphRef, GraphProps>(function GraphInner({ reac
           },
         ),
       }),
-      { ...defaultNodeTypes, customNode: customNodeRenderer },
+      { ...getDefaultNodeTypes(), customNode: customNodeRenderer },
     );
   }, [components, customNodeRenderer]);
 

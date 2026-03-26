@@ -16,7 +16,7 @@ describe('decision table store', () => {
     expect(table.inputs).toHaveLength(1);
     expect(table.outputs).toHaveLength(1);
     expect(table.executionMode).toBe('single');
-    expect(table.passThorough).toBe(false);
+    expect(table.passThrough).toBe(false);
   });
 
   it('commitData updates target cell and emits onChange', () => {

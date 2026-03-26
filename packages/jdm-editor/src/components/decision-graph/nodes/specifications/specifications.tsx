@@ -12,10 +12,22 @@ function makeNodeSpecification<T extends Record<NodeKind, V>, V extends NodeSpec
 }
 
 export const nodeSpecification = makeNodeSpecification({
-  [NodeKind.Input]: inputSpecification,
-  [NodeKind.Output]: outputSpecification,
-  [NodeKind.DecisionTable]: decisionTableSpecification,
-  [NodeKind.Expression]: expressionSpecification,
-  [NodeKind.Function]: functionSpecification,
-  [NodeKind.Switch]: switchSpecification,
+  get [NodeKind.Input]() {
+    return inputSpecification;
+  },
+  get [NodeKind.Output]() {
+    return outputSpecification;
+  },
+  get [NodeKind.DecisionTable]() {
+    return decisionTableSpecification;
+  },
+  get [NodeKind.Expression]() {
+    return expressionSpecification;
+  },
+  get [NodeKind.Function]() {
+    return functionSpecification;
+  },
+  get [NodeKind.Switch]() {
+    return switchSpecification;
+  },
 });

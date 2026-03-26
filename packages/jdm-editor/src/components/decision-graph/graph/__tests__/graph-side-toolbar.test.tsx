@@ -7,12 +7,12 @@ import { DecisionGraphProvider } from '../../context/dg-store.context';
 import { DecisionGraphEmpty } from '../../dg-empty';
 import { GraphSideToolbar } from '../graph-side-toolbar';
 
-vi.mock('../../../decision-table/excel', () => ({
+vi.mock('../../../../helpers/excel', () => ({
   exportDecisionTable: vi.fn(),
-  readDecisionTableFile: vi.fn(),
+  getExcelData: vi.fn(),
 }));
 
-import { exportDecisionTable } from '../../../decision-table/excel';
+import { exportDecisionTable } from '../../../../helpers/excel';
 
 const exportDecisionTableMock = vi.mocked(exportDecisionTable);
 
