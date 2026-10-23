@@ -1,20 +1,11 @@
 import { render, screen } from '@testing-library/react';
 import userEvent from '@testing-library/user-event';
 import React from 'react';
-import { describe, expect, it, vi } from 'vitest';
+import { afterEach, describe, expect, it, vi } from 'vitest';
 
 import { DecisionGraphProvider } from '../../context/dg-store.context';
 import { DecisionGraphEmpty } from '../../dg-empty';
 import { GraphSideToolbar } from '../graph-side-toolbar';
-
-vi.mock('../../../../helpers/excel', () => ({
-  exportDecisionTable: vi.fn(),
-  getExcelData: vi.fn(),
-}));
-
-import { exportDecisionTable } from '../../../../helpers/excel';
-
-const exportDecisionTableMock = vi.mocked(exportDecisionTable);
 
 const graph = {
   nodes: [
@@ -37,6 +28,10 @@ const graph = {
 };
 
 describe('GraphSideToolbar', () => {
+  afterEach(() => {
+    vi.restoreAllMocks();
+  });
+
   it('toggles active panel and emits onPanelsChange callback', async () => {
     const user = userEvent.setup();
     const onPanelsChange = vi.fn<(panel?: string) => void>();
@@ -68,38 +63,101 @@ describe('GraphSideToolbar', () => {
     expect(onPanelsChange).toHaveBeenLastCalledWith(undefined);
   });
 
-  it('exports only permitted decision tables when view mode is enabled', async () => {
+  it('keeps JSON upload available without Excel inputs or menus', async () => {
     const user = userEvent.setup();
+    const { container } = render(
+      <DecisionGraphProvider>
+        <DecisionGraphEmpty value={graph} />
+        <GraphSideToolbar />
+      </DecisionGraphProvider>,
+    );
+
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]');
+    expect(input).not.toBeNull();
+    expect(input).toHaveAttribute('accept', 'application/json');
+    expect(container.querySelectorAll('input[type="file"]')).toHaveLength(1);
+    expect(screen.queryByText(/excel/i)).not.toBeInTheDocument();
+
+    const inputClick = vi.spyOn(input!, 'click').mockImplementation(() => undefined);
+    await user.click(screen.getByRole('button', { name: 'cloud-upload' }));
+    expect(inputClick).toHaveBeenCalledOnce();
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('imports a JSON decision model', async () => {
+    const user = userEvent.setup();
+    const onChange = vi.fn();
+    const { container } = render(
+      <DecisionGraphProvider>
+        <DecisionGraphEmpty value={{ nodes: [], edges: [] }} onChange={onChange} />
+        <GraphSideToolbar />
+      </DecisionGraphProvider>,
+    );
+
+    const input = container.querySelector<HTMLInputElement>('input[type="file"]');
+    const file = new File(
+      [JSON.stringify({ contentType: 'application/vnd.gorules.decision', ...graph })],
+      'decision-model.json',
+      { type: 'application/json' },
+    );
+    await user.upload(input!, file);
+
+    await vi.waitFor(() => {
+      expect(onChange.mock.calls.at(-1)?.[0]).toMatchObject(graph);
+    });
+  });
+
+  it('downloads the graph as JSON', async () => {
+    const user = userEvent.setup();
+    const createObjectURL = vi.spyOn(URL, 'createObjectURL').mockReturnValue('blob:decision-model');
+    const revokeObjectURL = vi.spyOn(URL, 'revokeObjectURL').mockImplementation(() => undefined);
+    let downloadedName: string | undefined;
+    vi.spyOn(HTMLAnchorElement.prototype, 'click').mockImplementation(function (this: HTMLAnchorElement) {
+      downloadedName = this.download;
+    });
 
     render(
       <DecisionGraphProvider>
-        <DecisionGraphEmpty
-          value={graph}
-          name='decision-model.json'
-          viewConfig={{
-            enabled: true,
-            permissions: {
-              'dt-allowed': 'edit:full',
-              'dt-hidden': null,
-            },
-          }}
-        />
+        <DecisionGraphEmpty value={graph} name='decision-model.json' />
         <GraphSideToolbar />
       </DecisionGraphProvider>,
     );
 
     await user.click(screen.getByRole('button', { name: 'cloud-download' }));
-    await user.click(await screen.findByText('Download Excel'));
 
-    expect(exportDecisionTableMock).toHaveBeenCalledTimes(1);
-    expect(exportDecisionTableMock).toHaveBeenCalledWith(
-      'decision-model',
-      expect.arrayContaining([
-        expect.objectContaining({ id: 'dt-allowed', name: 'Allowed Table' }),
-      ]),
+    const blob = createObjectURL.mock.calls[0]?.[0];
+    if (!(blob instanceof Blob)) throw new Error('Expected a JSON download blob');
+    expect(blob.type).toBe('application/json');
+    expect(JSON.parse(await blob.text())).toEqual({ contentType: 'application/vnd.gorules.decision', ...graph });
+    expect(downloadedName).toBe('decision-model.json');
+    expect(revokeObjectURL).toHaveBeenCalledWith('blob:decision-model');
+    expect(screen.queryByRole('menu')).not.toBeInTheDocument();
+  });
+
+  it('hides file controls in view mode', () => {
+    render(
+      <DecisionGraphProvider>
+        <DecisionGraphEmpty
+          value={graph}
+          viewConfig={{ enabled: true, permissions: { 'dt-allowed': 'edit:full', 'dt-hidden': null } }}
+        />
+        <GraphSideToolbar />
+      </DecisionGraphProvider>,
     );
 
-    const payload = exportDecisionTableMock.mock.calls[0]?.[1] ?? [];
-    expect(payload).toHaveLength(1);
+    expect(screen.queryByRole('button', { name: 'cloud-upload' })).not.toBeInTheDocument();
+    expect(screen.queryByRole('button', { name: 'cloud-download' })).not.toBeInTheDocument();
+  });
+
+  it('keeps JSON download available when editing is disabled', () => {
+    render(
+      <DecisionGraphProvider>
+        <DecisionGraphEmpty value={graph} disabled />
+        <GraphSideToolbar />
+      </DecisionGraphProvider>,
+    );
+
+    expect(screen.queryByRole('button', { name: 'cloud-upload' })).not.toBeInTheDocument();
+    expect(screen.getByRole('button', { name: 'cloud-download' })).toBeEnabled();
   });
 });
