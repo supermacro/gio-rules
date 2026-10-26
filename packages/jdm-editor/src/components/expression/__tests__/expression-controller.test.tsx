@@ -2,9 +2,9 @@ import { act, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { ExpressionController } from '../expression-controller';
 import type { ExpressionEntry } from '../context/expression-store.context';
 import { ExpressionStoreProvider, useExpressionStoreRaw } from '../context/expression-store.context';
+import { ExpressionController } from '../expression-controller';
 
 type StoreProbeProps = {
   onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useExpressionStoreRaw>) => void>>;

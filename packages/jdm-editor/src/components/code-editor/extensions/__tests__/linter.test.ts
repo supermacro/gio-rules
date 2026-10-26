@@ -1,6 +1,6 @@
-import { VariableType } from '@gorules/zen-engine-wasm';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { VariableType } from '@gorules/zen-engine-wasm';
 import { describe, expect, it } from 'vitest';
 
 import { isWasmAvailable } from '../../../../helpers/wasm';

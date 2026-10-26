@@ -1,5 +1,5 @@
-import { describe, expect, it } from 'vitest';
 import type { Edge } from 'reactflow';
+import { describe, expect, it } from 'vitest';
 
 import { privateSymbol } from '../dg-types';
 import { mapToDecisionEdge, mapToGraphEdges, mapToGraphNode } from '../dg-util';

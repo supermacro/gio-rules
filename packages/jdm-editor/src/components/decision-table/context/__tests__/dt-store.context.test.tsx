@@ -2,13 +2,11 @@ import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import {
-  DecisionTableProvider,
-  parseDecisionTable,
-  useDecisionTableRaw,
-} from '../dt-store.context';
+import { DecisionTableProvider, parseDecisionTable, useDecisionTableRaw } from '../dt-store.context';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => <DecisionTableProvider>{children}</DecisionTableProvider>;
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <DecisionTableProvider>{children}</DecisionTableProvider>
+);
 
 describe('decision table store', () => {
   it('parseDecisionTable creates required schema defaults', () => {

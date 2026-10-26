@@ -1,13 +1,17 @@
-import { act, render, waitFor } from '@testing-library/react';
 import { VariableType } from '@gorules/zen-engine-wasm';
+import { act, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DecisionGraphInferTypes } from '../dg-infer';
 import { DecisionGraphProvider, NodeTypeKind, useDecisionGraphRaw } from '../context/dg-store.context';
+import { DecisionGraphInferTypes } from '../dg-infer';
 import type { Simulation } from '../simulator/simulation.types';
 
-const StoreProbe = ({ onStore }: { onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>> }) => {
+const StoreProbe = ({
+  onStore,
+}: {
+  onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>>;
+}) => {
   const store = useDecisionGraphRaw();
   useEffect(() => {
     onStore(store);
