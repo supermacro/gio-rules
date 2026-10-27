@@ -6,7 +6,11 @@ import { DecisionGraphProvider, useDecisionGraphRaw } from '../context/dg-store.
 import { DecisionGraphEmpty } from '../dg-empty';
 import type { DecisionGraphType } from '../dg-types';
 
-const StoreProbe = ({ onStore }: { onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>> }) => {
+const StoreProbe = ({
+  onStore,
+}: {
+  onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>>;
+}) => {
   const store = useDecisionGraphRaw();
   useEffect(() => {
     onStore(store);
@@ -43,7 +47,7 @@ describe('DecisionGraphEmpty', () => {
       <DecisionGraphProvider>
         <DecisionGraphEmpty
           value={graph}
-          viewConfig={{ enabled: true, permissions: { graph: 'edit:full', 'node-1': 'edit:full', 'node-2': null } }}
+          viewConfig={{ enabled: true, permissions: { 'graph': 'edit:full', 'node-1': 'edit:full', 'node-2': null } }}
         />
         <StoreProbe onStore={onStore} />
       </DecisionGraphProvider>,
@@ -72,13 +76,25 @@ describe('DecisionGraphEmpty', () => {
       store?.actions.setDecisionGraph({
         nodes: [
           ...graph.nodes,
-          { id: 'node-3', name: 'Expr', type: 'expressionNode', content: { expressions: [] }, position: { x: 200, y: 0 } },
+          {
+            id: 'node-3',
+            name: 'Expr',
+            type: 'expressionNode',
+            content: { expressions: [] },
+            position: { x: 200, y: 0 },
+          },
         ],
       });
       store?.actions.setDecisionGraph({
         nodes: [
           ...graph.nodes,
-          { id: 'node-4', name: 'Expr2', type: 'expressionNode', content: { expressions: [] }, position: { x: 220, y: 0 } },
+          {
+            id: 'node-4',
+            name: 'Expr2',
+            type: 'expressionNode',
+            content: { expressions: [] },
+            position: { x: 220, y: 0 },
+          },
         ],
       });
       vi.advanceTimersByTime(110);
@@ -99,7 +115,13 @@ describe('DecisionGraphEmpty', () => {
       store?.actions.setDecisionGraph({
         nodes: [
           ...graph.nodes,
-          { id: 'node-5', name: 'Expr3', type: 'expressionNode', content: { expressions: [] }, position: { x: 240, y: 0 } },
+          {
+            id: 'node-5',
+            name: 'Expr3',
+            type: 'expressionNode',
+            content: { expressions: [] },
+            position: { x: 240, y: 0 },
+          },
         ],
       });
       vi.advanceTimersByTime(110);

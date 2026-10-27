@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import { columnIdSelector, getPath, recursiveSelect, type SchemaSelectProps } from '../components';
+import { type SchemaSelectProps, columnIdSelector, getPath, recursiveSelect } from '../components';
 
 const fields: SchemaSelectProps[] = [
   {

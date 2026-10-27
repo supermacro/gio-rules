@@ -1,11 +1,6 @@
 import { describe, expect, it } from 'vitest';
 
-import {
-  addStrikethrough,
-  buildDiffString,
-  compareAndUnifyLists,
-  compareStringFields,
-} from '../comparison';
+import { addStrikethrough, buildDiffString, compareAndUnifyLists, compareStringFields } from '../comparison';
 
 const getDiffStatus = (item: unknown): unknown => {
   if (!item || typeof item !== 'object') return undefined;

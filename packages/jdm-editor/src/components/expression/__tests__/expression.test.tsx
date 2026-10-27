@@ -3,8 +3,8 @@ import userEvent from '@testing-library/user-event';
 import React from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { Expression } from '../expression';
 import type { ExpressionEntry } from '../context/expression-store.context';
+import { Expression } from '../expression';
 
 const defaultValue: ExpressionEntry[] = [{ id: 'row-1', key: 'approved', value: 'true' }];
 

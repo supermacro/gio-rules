@@ -1,8 +1,8 @@
 import { act, render } from '@testing-library/react';
 import { message } from 'antd';
 import React, { useEffect } from 'react';
-import { describe, expect, it, vi } from 'vitest';
 import type { Node } from 'reactflow';
+import { describe, expect, it, vi } from 'vitest';
 
 import { copyToClipboard, pasteFromClipboard } from '../../../../helpers/utility';
 import { DecisionGraphProvider } from '../../context/dg-store.context';
@@ -49,7 +49,10 @@ describe('useGraphClipboard', () => {
     const reactFlowRef = {
       current: {
         getEdges: () => [{ id: 'e1', type: 'edge', source: 'a', target: 'b', sourceHandle: null, targetHandle: null }],
-        getNodes: () => [{ id: 'a', position: { x: 10, y: 20 } }, { id: 'b', position: { x: 50, y: 80 } }],
+        getNodes: () => [
+          { id: 'a', position: { x: 10, y: 20 } },
+          { id: 'b', position: { x: 50, y: 80 } },
+        ],
       },
     };
 

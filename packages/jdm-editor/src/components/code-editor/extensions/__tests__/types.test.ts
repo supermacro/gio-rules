@@ -22,7 +22,10 @@ const createTestVariableType = () =>
 
 describe('types helpers', () => {
   it('buildTypeCompletion builds object property completions', () => {
-    const completions = buildTypeCompletion({ kind: { Object: { amount: 'Number', approved: 'Bool' } }, type: 'variable' });
+    const completions = buildTypeCompletion({
+      kind: { Object: { amount: 'Number', approved: 'Bool' } },
+      type: 'variable',
+    });
     expect(completions).toHaveLength(2);
     expect(completions[0]).toMatchObject({ label: 'amount', type: 'variable', detail: 'number' });
   });

@@ -2,10 +2,14 @@ import { act, render } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DecisionTableEmpty } from '../dt-empty';
 import { DecisionTableProvider, parseDecisionTable, useDecisionTableRaw } from '../context/dt-store.context';
+import { DecisionTableEmpty } from '../dt-empty';
 
-const StoreProbe = ({ onStore }: { onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionTableRaw>) => void>> }) => {
+const StoreProbe = ({
+  onStore,
+}: {
+  onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionTableRaw>) => void>>;
+}) => {
   const store = useDecisionTableRaw();
   useEffect(() => {
     onStore(store);
@@ -18,7 +22,14 @@ describe('DecisionTableEmpty', () => {
     const onStore = vi.fn<(store: ReturnType<typeof useDecisionTableRaw>) => void>();
     render(
       <DecisionTableProvider>
-        <DecisionTableEmpty id="dt-1" name="table.json" disabled permission="edit:rules" colWidth={222} minColWidth={111} />
+        <DecisionTableEmpty
+          id='dt-1'
+          name='table.json'
+          disabled
+          permission='edit:rules'
+          colWidth={222}
+          minColWidth={111}
+        />
         <StoreProbe onStore={onStore} />
       </DecisionTableProvider>,
     );

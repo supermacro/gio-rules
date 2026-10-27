@@ -4,7 +4,9 @@ import { describe, expect, it, vi } from 'vitest';
 
 import { DecisionGraphProvider, useDecisionGraphRaw } from '../dg-store.context';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => <DecisionGraphProvider>{children}</DecisionGraphProvider>;
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <DecisionGraphProvider>{children}</DecisionGraphProvider>
+);
 
 describe('decision graph store', () => {
   it('openTab and closeTab apply tab lifecycle actions consistently', () => {

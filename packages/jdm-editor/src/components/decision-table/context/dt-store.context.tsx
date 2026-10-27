@@ -432,19 +432,16 @@ function useStoreSelectorWithEquality<TState, TSlice>(
   const prevRef = React.useRef<TSlice | undefined>(undefined);
   const hasPrevRef = React.useRef(false);
 
-  return React.useCallback(
-    (state: TState) => {
-      const next = selectorRef.current(state);
-      if (hasPrevRef.current && equalsRef.current(prevRef.current as TSlice, next)) {
-        return prevRef.current as TSlice;
-      }
+  return React.useCallback((state: TState) => {
+    const next = selectorRef.current(state);
+    if (hasPrevRef.current && equalsRef.current(prevRef.current as TSlice, next)) {
+      return prevRef.current as TSlice;
+    }
 
-      prevRef.current = next;
-      hasPrevRef.current = true;
-      return next;
-    },
-    [],
-  );
+    prevRef.current = next;
+    hasPrevRef.current = true;
+    return next;
+  }, []);
 }
 
 export function useDecisionTableState<T>(

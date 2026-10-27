@@ -36,7 +36,11 @@ const graph: DecisionGraphType = {
   edges: [],
 };
 
-const StoreProbe = ({ onStore }: { onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>> }) => {
+const StoreProbe = ({
+  onStore,
+}: {
+  onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>>;
+}) => {
   const store = useDecisionGraphRaw();
   useEffect(() => {
     onStore(store);

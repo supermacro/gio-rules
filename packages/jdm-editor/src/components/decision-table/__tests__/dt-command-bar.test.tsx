@@ -3,11 +3,15 @@ import userEvent from '@testing-library/user-event';
 import React, { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
-import { DecisionTableCommandBar } from '../dt-command-bar';
 import { DecisionTableProvider, parseDecisionTable, useDecisionTableRaw } from '../context/dt-store.context';
+import { DecisionTableCommandBar } from '../dt-command-bar';
 import { DecisionTableEmpty } from '../dt-empty';
 
-const StoreProbe = ({ onStore }: { onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionTableRaw>) => void>> }) => {
+const StoreProbe = ({
+  onStore,
+}: {
+  onStore: ReturnType<typeof vi.fn<(store: ReturnType<typeof useDecisionTableRaw>) => void>>;
+}) => {
   const store = useDecisionTableRaw();
   useEffect(() => {
     onStore(store);
@@ -16,6 +20,18 @@ const StoreProbe = ({ onStore }: { onStore: ReturnType<typeof vi.fn<(store: Retu
 };
 
 describe('DecisionTableCommandBar', () => {
+  it('does not render Excel controls or file inputs', () => {
+    const { container, queryByRole, queryByText } = render(
+      <DecisionTableProvider>
+        <DecisionTableCommandBar />
+      </DecisionTableProvider>,
+    );
+
+    expect(queryByRole('button', { name: /excel/i })).not.toBeInTheDocument();
+    expect(queryByText(/excel/i)).not.toBeInTheDocument();
+    expect(container.querySelector('input[type="file"]')).not.toBeInTheDocument();
+  });
+
   it('adds rows above and below cursor through command bar buttons', async () => {
     const user = userEvent.setup();
     const onStore = vi.fn<(store: ReturnType<typeof useDecisionTableRaw>) => void>();

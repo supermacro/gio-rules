@@ -18,11 +18,11 @@ describe('Table column sizing persistence', () => {
     const setItemSpy = vi.spyOn(Storage.prototype, 'setItem');
 
     render(
-        <DecisionTableProvider>
-          <DecisionTableEmpty value={tableValue} />
-          <DecisionTable id='table-1' tableHeight={300} />
-        </DecisionTableProvider>,
-      );
+      <DecisionTableProvider>
+        <DecisionTableEmpty value={tableValue} />
+        <DecisionTable id='table-1' tableHeight={300} />
+      </DecisionTableProvider>,
+    );
 
     expect(setItemSpy).toHaveBeenCalledWith('jdm-editor:decisionTable:columns:table-1', expect.any(String));
 

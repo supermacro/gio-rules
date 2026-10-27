@@ -2,13 +2,11 @@ import { act, renderHook } from '@testing-library/react';
 import React from 'react';
 import { describe, expect, it } from 'vitest';
 
-import {
-  ExpressionStoreProvider,
-  createExpression,
-  useExpressionStoreRaw,
-} from '../expression-store.context';
+import { ExpressionStoreProvider, createExpression, useExpressionStoreRaw } from '../expression-store.context';
 
-const wrapper = ({ children }: { children: React.ReactNode }) => <ExpressionStoreProvider>{children}</ExpressionStoreProvider>;
+const wrapper = ({ children }: { children: React.ReactNode }) => (
+  <ExpressionStoreProvider>{children}</ExpressionStoreProvider>
+);
 
 describe('expression store', () => {
   it('createExpression uses defaults and applies partial overrides', () => {
@@ -22,10 +20,12 @@ describe('expression store', () => {
     const { result } = renderHook(() => useExpressionStoreRaw(), { wrapper });
 
     act(() => {
-      result.current.getState().setExpressions([
-        createExpression({ id: 'a', key: 'first', value: '1' }),
-        createExpression({ id: 'b', key: 'second', value: '2' }),
-      ]);
+      result.current
+        .getState()
+        .setExpressions([
+          createExpression({ id: 'a', key: 'first', value: '1' }),
+          createExpression({ id: 'b', key: 'second', value: '2' }),
+        ]);
       result.current.getState().addRowAbove(1);
     });
 
@@ -39,10 +39,12 @@ describe('expression store', () => {
     const { result } = renderHook(() => useExpressionStoreRaw(), { wrapper });
 
     act(() => {
-      result.current.getState().setExpressions([
-        createExpression({ id: 'a', key: 'first', value: '1' }),
-        createExpression({ id: 'b', key: 'second', value: '2' }),
-      ]);
+      result.current
+        .getState()
+        .setExpressions([
+          createExpression({ id: 'a', key: 'first', value: '1' }),
+          createExpression({ id: 'b', key: 'second', value: '2' }),
+        ]);
       result.current.getState().updateRow(1, { key: 'updated' });
     });
 
@@ -56,11 +58,13 @@ describe('expression store', () => {
     const { result } = renderHook(() => useExpressionStoreRaw(), { wrapper });
 
     act(() => {
-      result.current.getState().setExpressions([
-        createExpression({ id: 'a', key: 'first', value: '1' }),
-        createExpression({ id: 'b', key: 'second', value: '2' }),
-        createExpression({ id: 'c', key: 'third', value: '3' }),
-      ]);
+      result.current
+        .getState()
+        .setExpressions([
+          createExpression({ id: 'a', key: 'first', value: '1' }),
+          createExpression({ id: 'b', key: 'second', value: '2' }),
+          createExpression({ id: 'c', key: 'third', value: '3' }),
+        ]);
       result.current.getState().swapRows(0, 2);
       result.current.getState().removeRow(1);
     });

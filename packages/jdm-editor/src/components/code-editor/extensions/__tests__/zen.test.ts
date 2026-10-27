@@ -1,7 +1,7 @@
-import { parser as zenParser } from '@gorules/lezer-zen';
-import { parser as zenTemplateParser } from '@gorules/lezer-zen-template';
 import { EditorState } from '@codemirror/state';
 import { EditorView } from '@codemirror/view';
+import { parser as zenParser } from '@gorules/lezer-zen';
+import { parser as zenTemplateParser } from '@gorules/lezer-zen-template';
 import { describe, expect, it, vi } from 'vitest';
 
 import { applyCompletion, zenExtensions } from '../zen';
