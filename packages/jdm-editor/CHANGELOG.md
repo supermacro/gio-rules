@@ -3,6 +3,17 @@
 All notable changes to this project will be documented in this file.
 See [Conventional Commits](https://conventionalcommits.org) for commit guidelines.
 
+# 2.0.0 (2026-10-27)
+
+### Breaking Changes
+
+- Remove Excel import and export from graph and decision-table editors. JSON import and export remain available.
+
+### Bug Fixes
+
+- Update vulnerable dependencies and include the MIT license in the published package.
+- Retain React 19 compatibility fixes and upstream editor changes through release 1.52.0.
+
 # [1.52.0](https://github.com/gorules/jdm-editor/compare/@gorules/jdm-editor@1.51.5...@gorules/jdm-editor@1.52.0) (2026-05-13)
 
 ### Features

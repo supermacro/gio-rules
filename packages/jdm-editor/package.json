@@ -1,6 +1,6 @@
 {
   "name": "giorules-jdm-editor",
-  "version": "1.48.0",
+  "version": "2.0.0",
   "description": "React 19 Compatible Fork of GoRules JDM Editor",
   "author": "Giorgio Delgado & CoPlane Inc.",
   "homepage": "https://github.com/supermacro/gio-rules",
@@ -76,7 +76,7 @@
     "to-json-schema": "^0.2.5",
     "ts-pattern": "^5.7.0",
     "use-debounce": "^10.0.4",
-    "zod": "^3.24.2",
+    "zod": "^4.6.7",
     "zustand": "^5.0.11"
   },
   "devDependencies": {
