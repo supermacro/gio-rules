@@ -4,9 +4,10 @@ import { produce } from 'immer';
 import { useEffect } from 'react';
 import { P, match } from 'ts-pattern';
 
+import { jsonSchemaToVariableType } from '../../helpers/json-schema-type';
 import type { GraphWalker } from '../../helpers/traversal';
 import { createGraphWalker } from '../../helpers/traversal';
-import { isWasmAvailable } from '../../helpers/wasm';
+import { useWasmReady } from '../../helpers/wasm';
 import type { DecisionGraphStoreType } from './context/dg-store.context';
 import { NodeTypeKind, useDecisionGraphRaw } from './context/dg-store.context';
 import type { NodeKind } from './nodes/specifications/specification-types';
@@ -14,14 +15,18 @@ import { nodeSpecification } from './nodes/specifications/specifications';
 
 export const DecisionGraphInferTypes = () => {
   const { stateStore } = useDecisionGraphRaw();
+  const wasmReady = useWasmReady();
 
   // Set variable types based on trace
   useEffect(() => {
-    if (!isWasmAvailable()) {
+    if (!wasmReady) {
       return;
     }
 
-    return stateStore.subscribe(({ simulate, nodeTypes, decisionGraph }, prevState) => {
+    const update = (
+      { simulate, nodeTypes, decisionGraph }: DecisionGraphStoreType['state'],
+      prevState?: DecisionGraphStoreType['state'],
+    ) => {
       try {
         if (equal(simulate, prevState?.simulate)) {
           return;
@@ -65,44 +70,50 @@ export const DecisionGraphInferTypes = () => {
       } catch (err) {
         console.error('error occurred while setting up variable types from trace', err);
       }
-    });
-  }, []);
+    };
+    const unsubscribe = stateStore.subscribe(update);
+    update(stateStore.getState());
+    return unsubscribe;
+  }, [stateStore, wasmReady]);
 
   // Infer types for nodes
   useEffect(() => {
-    if (!isWasmAvailable()) {
+    if (!wasmReady) {
       return;
     }
 
     const graphWalker = createGraphWalker();
-    return stateStore.subscribe((state, prevState) => {
+    const update = (state: DecisionGraphStoreType['state'], prevState?: DecisionGraphStoreType['state']) => {
       try {
         const stateDigest = inferTypesStateDigest(state);
-        const prevStateDigest = inferTypesStateDigest(prevState);
-        const needUpdate = inferTypesNeedsUpdate(state, prevState);
+        const prevStateDigest = prevState && inferTypesStateDigest(prevState);
+        const needUpdate = !prevState || inferTypesNeedsUpdate(state, prevState);
         if (equal(stateDigest, prevStateDigest) && !needUpdate) {
           return;
         }
 
-        const infer = inferNodeTypes(state, prevState, graphWalker);
+        const infer = inferNodeTypes(state, prevState ?? state, graphWalker);
         if (infer.isModified) {
           stateStore.setState({ nodeTypes: infer.nodeTypes });
         }
       } catch (err) {
         console.error('error occurred during node type inference', err);
       }
-    });
-  }, []);
+    };
+    const unsubscribe = stateStore.subscribe(update);
+    update(stateStore.getState());
+    return unsubscribe;
+  }, [stateStore, wasmReady]);
 
   useEffect(() => {
-    if (!isWasmAvailable()) {
+    if (!wasmReady) {
       return;
     }
 
-    return stateStore.subscribe((state, prevState) => {
+    const update = (state: DecisionGraphStoreType['state'], prevState?: DecisionGraphStoreType['state']) => {
       try {
         const stateDigest = globalTypesStateDigest(state);
-        const prevStateDigest = globalTypesStateDigest(prevState);
+        const prevStateDigest = prevState && globalTypesStateDigest(prevState);
         if (equal(stateDigest, prevStateDigest)) {
           return;
         }
@@ -122,8 +133,11 @@ export const DecisionGraphInferTypes = () => {
       } catch (err) {
         console.error('error occurred while global node types', err);
       }
-    });
-  }, []);
+    };
+    const unsubscribe = stateStore.subscribe(update);
+    update(stateStore.getState());
+    return unsubscribe;
+  }, [stateStore, wasmReady]);
 
   return null;
 };
@@ -141,7 +155,26 @@ const inferNodeTypes: InferNodeTypes = ({ decisionGraph, nodeTypes, customNodes 
   const newNodeTypes = produce(nodeTypes, (draft) => {
     for (const { node, incomers } of graphWalker.walk(decisionGraph)) {
       if (node.type === 'inputNode') {
-        return;
+        let schemaType: VariableType | undefined;
+        try {
+          const schema = node.content?.schema;
+          if (typeof schema === 'string' && schema.trim()) {
+            const parsed: unknown = JSON.parse(schema);
+            if (parsed !== null && (typeof parsed === 'object' || typeof parsed === 'boolean')) {
+              schemaType = VariableType.fromJson(jsonSchemaToVariableType(parsed));
+            }
+          }
+        } catch {
+          // Incomplete JSON must not interrupt inference while editing a schema.
+        }
+        const currentType = draft[node.id]?.[NodeTypeKind.Output];
+        if (schemaType ? !currentType?.equal(schemaType) : !!currentType) {
+          isModified = true;
+          draft[node.id] ??= {};
+          if (schemaType) draft[node.id][NodeTypeKind.Output] = schemaType;
+          else delete draft[node.id][NodeTypeKind.Output];
+        }
+        continue;
       }
 
       const incomerTypes = incomers
@@ -167,7 +200,7 @@ const inferNodeTypes: InferNodeTypes = ({ decisionGraph, nodeTypes, customNodes 
         nodeSpecification[node.type as NodeKind]?.inferTypes ??
         customNodes.find((n) => n.kind === node.type)?.inferTypes;
       if (!inferTypes) {
-        return;
+        continue;
       }
 
       const input =
@@ -183,7 +216,7 @@ const inferNodeTypes: InferNodeTypes = ({ decisionGraph, nodeTypes, customNodes 
       const prevContent = prevState.decisionGraph.nodes.find((n) => n.id === node.id)?.content;
       const needsUpdate = inferTypes.needsUpdate(node.content, prevContent) || !input.equal(prevInput);
       if (!needsUpdate && draft?.[node.id]?.[NodeTypeKind.InferredOutput]) {
-        return;
+        continue;
       }
 
       const inferredOutputType = inferTypes.determineOutputType({ input, content: node.content });
@@ -205,7 +238,11 @@ const inferNodeTypes: InferNodeTypes = ({ decisionGraph, nodeTypes, customNodes 
 
 const inferTypesStateDigest = ({ decisionGraph, nodeTypes, customNodes }: DecisionGraphStoreType['state']) => {
   const edgesData = decisionGraph.edges;
-  const nodesData = decisionGraph.nodes.map(({ id, type }) => ({ id, type }));
+  const nodesData = decisionGraph.nodes.map(({ id, type, content }) => ({
+    id,
+    type,
+    schema: type === 'inputNode' ? content?.schema : undefined,
+  }));
   const customNodesData = customNodes.map((cn) => cn.kind);
 
   const typesData = Object.entries(nodeTypes).map(([id, value]) => ({

@@ -6,8 +6,9 @@ import { describe, expect, it, vi } from 'vitest';
 import { DecisionGraph } from '../dg';
 import type { DecisionGraphType } from '../dg-types';
 
-vi.mock('../../../../helpers/wasm', () => ({
+vi.mock('../../../helpers/wasm', () => ({
   isWasmAvailable: () => false,
+  useWasmReady: () => false,
 }));
 
 const graph: DecisionGraphType = {

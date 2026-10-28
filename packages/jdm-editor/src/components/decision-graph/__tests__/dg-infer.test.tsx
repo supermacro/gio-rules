@@ -85,7 +85,7 @@ describe('DecisionGraphInferTypes', () => {
     act(() => {
       store?.stateStore.setState({
         decisionGraph: {
-          nodes: [{ id: 'n1', name: 'Node', type: 'expressionNode', position: { x: 0, y: 0 }, content: {} }],
+          nodes: [{ id: 'n1', name: 'Node', type: 'customNode', position: { x: 0, y: 0 }, content: {} }],
           edges: [],
         },
         nodeTypes: {

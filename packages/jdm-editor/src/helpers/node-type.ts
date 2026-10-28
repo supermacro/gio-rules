@@ -6,11 +6,13 @@ import {
   NodeTypeKind,
   useDecisionGraphState,
 } from '../components/decision-graph/context/dg-store.context';
-import { isWasmAvailable } from './wasm';
+import { useWasmReady } from './wasm';
 
 type NodeTypeParams = {
   attachGlobals?: boolean;
   disabled?: boolean;
+  inputField?: string | null;
+  executionMode?: 'single' | 'loop';
 };
 
 const getNodeType = (nodeTypes: DecisionGraphStoreType['state']['nodeTypes'], id: string) =>
@@ -18,9 +20,13 @@ const getNodeType = (nodeTypes: DecisionGraphStoreType['state']['nodeTypes'], id
   nodeTypes[id]?.[NodeTypeKind.InferredInput] ??
   VariableType.fromJson({ Object: {} });
 
-export const useNodeType = (id: string, { attachGlobals = true, disabled = false }: NodeTypeParams = {}) => {
+export const useNodeType = (
+  id: string,
+  { attachGlobals = true, disabled = false, inputField, executionMode }: NodeTypeParams = {},
+) => {
+  const wasmReady = useWasmReady();
   const typeInfo = useDecisionGraphState(({ nodeTypes, globalType }) => {
-    if (!isWasmAvailable() || disabled) {
+    if (!wasmReady || disabled) {
       return undefined;
     }
 
@@ -32,12 +38,14 @@ export const useNodeType = (id: string, { attachGlobals = true, disabled = false
       return undefined;
     }
 
-    const nodeType = getNodeType(typeInfo.nodeTypes, id);
+    let nodeType = getNodeType(typeInfo.nodeTypes, id).clone();
+    if (inputField) nodeType = nodeType.calculateType(inputField);
+    if (executionMode === 'loop') nodeType = nodeType.arrayItem();
     if (!attachGlobals) {
       return nodeType;
     }
 
     Object.entries(typeInfo?.globalType ?? {}).forEach(([k, v]) => nodeType.set(k, v));
     return nodeType;
-  }, [typeInfo?.globalType, typeInfo?.nodeTypes, attachGlobals]);
+  }, [typeInfo?.globalType, typeInfo?.nodeTypes, id, attachGlobals, inputField, executionMode]);
 };
