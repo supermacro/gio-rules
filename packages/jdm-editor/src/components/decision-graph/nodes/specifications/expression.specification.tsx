@@ -8,6 +8,7 @@ import { HashIcon } from 'lucide-react';
 import React from 'react';
 import type { z } from 'zod';
 
+import { createExpressionContext } from '../../../../helpers/expression-context';
 import { useNodeType } from '../../../../helpers/node-type';
 import type { expressionNodeSchema } from '../../../../helpers/schema';
 import { DiffInput, DiffRadio, DiffSwitch } from '../../../shared';
@@ -124,16 +125,13 @@ export const expressionSpecification: NodeSpecification<NodeExpressionData> = {
   },
   inferTypes: {
     needsUpdate: (content, prevContent) => !equal(content, prevContent),
-    determineOutputType: ({ input, content }) => {
-      let nodeInput = input.clone();
+    determineOutputType: ({ input, content, globals }) => {
+      const nodeInput = createExpressionContext(input, {
+        inputField: content.inputField,
+        executionMode: content.executionMode,
+        globals: globals ?? {},
+      });
       let determinedType = VariableType.fromJson({ Object: {} });
-      if (content.inputField) {
-        nodeInput = input.calculateType(content.inputField);
-      }
-
-      if (content.executionMode === 'loop') {
-        nodeInput = nodeInput.arrayItem();
-      }
 
       (content.expressions || []).forEach((expression) => {
         if (!expression.key || !expression.value) {

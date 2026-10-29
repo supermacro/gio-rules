@@ -6,6 +6,7 @@ import {
   NodeTypeKind,
   useDecisionGraphState,
 } from '../components/decision-graph/context/dg-store.context';
+import { createExpressionContext } from './expression-context';
 import { useWasmReady } from './wasm';
 
 type NodeTypeParams = {
@@ -38,14 +39,10 @@ export const useNodeType = (
       return undefined;
     }
 
-    let nodeType = getNodeType(typeInfo.nodeTypes, id).clone();
-    if (inputField) nodeType = nodeType.calculateType(inputField);
-    if (executionMode === 'loop') nodeType = nodeType.arrayItem();
-    if (!attachGlobals) {
-      return nodeType;
-    }
-
-    Object.entries(typeInfo?.globalType ?? {}).forEach(([k, v]) => nodeType.set(k, v));
-    return nodeType;
+    return createExpressionContext(getNodeType(typeInfo.nodeTypes, id), {
+      inputField,
+      executionMode,
+      globals: attachGlobals ? typeInfo.globalType : undefined,
+    });
   }, [typeInfo?.globalType, typeInfo?.nodeTypes, id, attachGlobals, inputField, executionMode]);
 };

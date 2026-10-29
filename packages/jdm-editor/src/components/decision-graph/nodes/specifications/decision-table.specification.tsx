@@ -1,5 +1,4 @@
 import { ArrowRightOutlined, SyncOutlined } from '@ant-design/icons';
-import { VariableType } from '@gorules/zen-engine-wasm';
 import { Button, Form, Space } from 'antd';
 import equal from 'fast-deep-equal/es6/react';
 import { produce } from 'immer';
@@ -16,6 +15,7 @@ import type { Diff, DiffMetadata } from '../../dg-types';
 import { compareAndUnifyLists } from '../../diff/comparison';
 import { TabDecisionTable } from '../../graph/tab-decision-table';
 import { GraphNode } from '../graph-node';
+import { inferDecisionTableOutput } from '../inference/decision-table';
 import { NodeKind } from './specification-types';
 import type { NodeSpecification } from './specification-types';
 
@@ -248,55 +248,7 @@ export const decisionTableSpecification: NodeSpecification<NodeDecisionTableData
   },
   inferTypes: {
     needsUpdate: (content, prevContent) => !equal(content, prevContent),
-    determineOutputType: ({ content, input }) => {
-      let nodeInput = input.clone();
-      let determinedType = VariableType.fromJson({ Object: {} });
-      if (content.inputField) {
-        nodeInput = input.calculateType(content.inputField);
-      }
-
-      if (content.executionMode === 'loop') {
-        nodeInput = nodeInput.arrayItem();
-      }
-
-      const outputs = (content?.outputs || []).filter((output) => !!output.field);
-      outputs.forEach((output) => {
-        for (const rule of content.rules) {
-          if (!rule[output.id]) {
-            continue;
-          }
-
-          const calculatedType = nodeInput.calculateType(rule[output.id]);
-          const jsonType = calculatedType.toJson();
-          if (jsonType !== 'Any' && jsonType !== 'Null') {
-            determinedType.set(output.field, calculatedType);
-            return;
-          }
-        }
-
-        determinedType.setJson(output.field, 'Any');
-      });
-
-      if (content.hitPolicy === 'collect') {
-        determinedType = determinedType.toArray();
-      }
-
-      if (content.executionMode === 'loop') {
-        determinedType = determinedType.toArray();
-      }
-
-      if (content.outputPath) {
-        const newType = VariableType.fromJson({ Object: {} });
-        newType.set(content.outputPath, determinedType);
-        determinedType = newType;
-      }
-
-      if (content.passThrough) {
-        determinedType = input.merge(determinedType);
-      }
-
-      return determinedType;
-    },
+    determineOutputType: inferDecisionTableOutput,
   },
   generateNode: ({ index }) => ({
     name: `decisionTable${index}`,
