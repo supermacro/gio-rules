@@ -58,3 +58,5 @@ export {
   type Position,
   type DiffStatus,
 } from './dg-types';
+
+export { inferGraphTypes, type GraphInferenceInput, type GraphInferenceResult } from './graph-inference';

@@ -1,11 +1,10 @@
-import { VariableType } from '@gorules/zen-engine-wasm';
 import { act, render, waitFor } from '@testing-library/react';
 import React, { useEffect } from 'react';
 import { describe, expect, it, vi } from 'vitest';
 
 import { DecisionGraphProvider, NodeTypeKind, useDecisionGraphRaw } from '../context/dg-store.context';
 import { DecisionGraphInferTypes } from '../dg-infer';
-import type { Simulation } from '../simulator/simulation.types';
+import { chain, expression, input, simulation } from './inference-contract/fixtures';
 
 const StoreProbe = ({
   onStore,
@@ -34,21 +33,13 @@ describe('DecisionGraphInferTypes', () => {
 
     act(() => {
       store?.stateStore.setState({
-        decisionGraph: {
-          nodes: [{ id: 'n1', name: 'AutoApproved', type: 'expressionNode', position: { x: 0, y: 0 }, content: {} }],
-          edges: [],
-        },
-        nodeTypes: {
-          n1: {
-            [NodeTypeKind.Output]: VariableType.fromJson('Bool'),
-          },
-        },
+        decisionGraph: chain(input(), expression('n1', { approved: 'true' })),
       });
     });
 
     await waitFor(() => {
       const globalType = store?.stateStore.getState().globalType.$nodes;
-      expect(globalType?.get('AutoApproved').toJson()).toBe('Bool');
+      expect(globalType?.get('n1.approved').toJson()).toBe('Bool');
     });
 
     const firstNodesType = store?.stateStore.getState().globalType.$nodes;
@@ -61,7 +52,7 @@ describe('DecisionGraphInferTypes', () => {
     });
   });
 
-  it('removes trace-driven Input/Output node types when simulation trace becomes null', async () => {
+  it('clears sample-derived types when the simulation is removed', async () => {
     const onStore = vi.fn<(store: ReturnType<typeof useDecisionGraphRaw>) => void>();
     render(
       <DecisionGraphProvider>
@@ -73,36 +64,16 @@ describe('DecisionGraphInferTypes', () => {
     const store = onStore.mock.calls.at(-1)?.[0];
     expect(store).toBeDefined();
 
-    const simulateWithTrace: Simulation = {
-      result: {
-        performance: '1ms',
-        result: {},
-        snapshot: { nodes: [], edges: [] },
-        trace: {},
-      },
-    };
-
+    const graph = chain(input(''), expression('n1', { copied: 'amount' }));
+    const simulateWithTrace = simulation(graph, [{ id: 'input', input: null, output: { amount: 2 } }]);
     act(() => {
-      store?.stateStore.setState({
-        decisionGraph: {
-          nodes: [{ id: 'n1', name: 'Node', type: 'expressionNode', position: { x: 0, y: 0 }, content: {} }],
-          edges: [],
-        },
-        nodeTypes: {
-          n1: {
-            [NodeTypeKind.Input]: VariableType.fromJson('String'),
-            [NodeTypeKind.Output]: VariableType.fromJson('Number'),
-            [NodeTypeKind.InferredOutput]: VariableType.fromJson('Bool'),
-          },
-        },
-        simulate: simulateWithTrace,
-      });
+      store?.stateStore.setState({ decisionGraph: graph, simulate: simulateWithTrace });
     });
 
     await waitFor(() => {
       const nodeType = store?.stateStore.getState().nodeTypes.n1;
-      expect(nodeType?.[NodeTypeKind.Input]?.toJson()).toBe('String');
-      expect(nodeType?.[NodeTypeKind.Output]?.toJson()).toBe('Number');
+      expect(nodeType?.[NodeTypeKind.InferredInput]?.toJson()).toEqual({ Object: { amount: 'Number' } });
+      expect(nodeType?.[NodeTypeKind.InferredOutput]?.toJson()).toEqual({ Object: { copied: 'Number' } });
     });
 
     act(() => {
@@ -113,7 +84,8 @@ describe('DecisionGraphInferTypes', () => {
       const nodeType = store?.stateStore.getState().nodeTypes.n1;
       expect(nodeType?.[NodeTypeKind.Input]).toBeUndefined();
       expect(nodeType?.[NodeTypeKind.Output]).toBeUndefined();
-      expect(nodeType?.[NodeTypeKind.InferredOutput]?.toJson()).toBe('Bool');
+      expect(nodeType?.[NodeTypeKind.InferredInput]?.toJson()).toBe('Any');
+      expect(nodeType?.[NodeTypeKind.InferredOutput]?.toJson()).toEqual({ Object: { copied: 'Any' } });
     });
   });
 });

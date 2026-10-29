@@ -109,7 +109,7 @@ const SimulateDataSync: React.FC<Pick<ExpressionProps, 'debug' | 'inputVariableT
 
         expressionStoreRaw.setState({
           calculatedInputData: newInputData,
-          inputVariableType: VariableType.fromVariable(newInputData),
+          inputVariableType: inputVariableType ?? VariableType.fromVariable(newInputData),
         });
       } else {
         let newInputData = varInputData.cloneWith('$nodes', inputData.$nodes);
@@ -119,7 +119,7 @@ const SimulateDataSync: React.FC<Pick<ExpressionProps, 'debug' | 'inputVariableT
 
         expressionStoreRaw.setState({
           calculatedInputData: newInputData,
-          inputVariableType: VariableType.fromVariable(newInputData),
+          inputVariableType: inputVariableType ?? VariableType.fromVariable(newInputData),
         });
       }
     };
@@ -132,7 +132,7 @@ const SimulateDataSync: React.FC<Pick<ExpressionProps, 'debug' | 'inputVariableT
 
       applyDebug(state);
     });
-  }, []);
+  }, [inputVariableType]);
 
   return null;
 };

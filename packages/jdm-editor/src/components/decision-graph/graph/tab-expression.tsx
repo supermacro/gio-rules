@@ -5,6 +5,7 @@ import type { z } from 'zod';
 
 import type { GetNodeDataResult } from '../../../helpers/node-data';
 import { getNodeData } from '../../../helpers/node-data';
+import { useNodeType } from '../../../helpers/node-type';
 import type { expressionNodeSchema } from '../../../helpers/schema';
 import { get } from '../../../helpers/utility';
 import { isWasmAvailable } from '../../../helpers/wasm';
@@ -77,6 +78,8 @@ export const TabExpression: React.FC<TabExpressionProps> = ({ id, manager }) => 
     }),
   );
 
+  const inputVariableType = useNodeType(id, { inputField: content?.inputField, executionMode: content?.executionMode });
+
   const debug = useMemo(() => {
     if (!nodeTrace || !inputData || !nodeSnapshot) {
       return undefined;
@@ -109,6 +112,7 @@ export const TabExpression: React.FC<TabExpressionProps> = ({ id, manager }) => 
         permission={(viewConfig?.enabled ? viewConfig?.permissions?.[id] : 'edit:full') as ExpressionPermission}
         manager={manager}
         debug={debug}
+        inputVariableType={inputVariableType}
         onChange={(val) => {
           graphActions.updateNode(id, (draft) => {
             draft.content.expressions = val;

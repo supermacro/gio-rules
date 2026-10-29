@@ -28,6 +28,7 @@ type GenerateNodeParams = {
 export type InferTypeData<T> = {
   input: VariableType;
   content: T;
+  globals?: Record<string, VariableType>;
 };
 
 export type NodeSpecification<T = any> = {

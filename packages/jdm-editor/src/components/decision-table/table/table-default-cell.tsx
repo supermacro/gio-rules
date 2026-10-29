@@ -109,7 +109,7 @@ const TableInputCell: React.FC<TableCellProps> = ({ column, value, onChange, dis
     inputVariableType,
     mode,
     localVariableType: match(column)
-      .with({ colType: 'input', field: P.string }, (c) => ({
+      .with({ colType: 'input', field: P.string.minLength(1) }, (c) => ({
         type: LocalVariableKind.Derived,
         value: derivedVariableTypes[c.field] ?? null,
       }))
@@ -224,7 +224,7 @@ const TableInputCell: React.FC<TableCellProps> = ({ column, value, onChange, dis
         ref={textareaRef as any}
         id={id}
         type={match(column)
-          .with({ colType: 'input', field: P.string }, () => 'unary' as const)
+          .with({ colType: 'input', field: P.string.minLength(1) }, () => 'unary' as const)
           .otherwise(() => 'standard' as const)}
         className='grl-dt__cell__input'
         noStyle

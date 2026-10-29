@@ -170,13 +170,13 @@ export const DecisionTableEmpty: React.FC<DecisionTableEmptyType> = ({
         const newInputData = varInputData.get(state.debugIndex).cloneWith('$nodes', inputData.$nodes);
         stateStore.setState({
           calculatedInputData: newInputData,
-          inputVariableType: VariableType.fromVariable(newInputData),
+          inputVariableType: inputVariableType ?? VariableType.fromVariable(newInputData),
         });
       } else {
         const newInputData = varInputData.cloneWith('$nodes', inputData.$nodes);
         stateStore.setState({
           calculatedInputData: newInputData,
-          inputVariableType: VariableType.fromVariable(newInputData),
+          inputVariableType: inputVariableType ?? VariableType.fromVariable(newInputData),
         });
       }
     };
@@ -189,7 +189,7 @@ export const DecisionTableEmpty: React.FC<DecisionTableEmptyType> = ({
 
       applyDebug(state);
     });
-  }, []);
+  }, [inputVariableType]);
 
   return null;
 };
